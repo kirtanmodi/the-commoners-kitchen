@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
-import ambience1 from '../assets/ambience-3.jpg';
+import ambience1 from '../assets/ambience7.jpg';
 
 const Hero = () => {
   const videoRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -12,31 +13,54 @@ const Hero = () => {
       }
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      if (textRef.current) {
+        const { clientX, clientY } = e;
+        const { left, top, width, height } = textRef.current.getBoundingClientRect();
+        const x = (clientX - left) / width;
+        const y = (clientY - top) / height;
+        
+        textRef.current.style.setProperty('--mouse-x', `${x}`);
+        textRef.current.style.setProperty('--mouse-y', `${y}`);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   return (
     <div className="relative h-screen overflow-hidden">
       <div
         ref={videoRef}
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center artistic-overlay"
         style={{
           backgroundImage: `url(${ambience1})`,
         }}
       >
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
       </div>
       <div className="relative h-full flex items-center justify-center text-center px-4">
-        <div className="max-w-4xl">
-          <h1 className="text-5xl md:text-7xl font-serif text-[#FEFEFE] mb-6">
+        <div 
+          ref={textRef}
+          className="max-w-4xl transform-gpu transition-transform duration-300"
+          style={{
+            transform: `perspective(1000px) rotateX(calc(var(--mouse-y, 0.5) * 5deg)) rotateY(calc(var(--mouse-x, 0.5) * 5deg))`,
+          }}
+        >
+          <h1 className="artistic-title text-[#FEFEFE] mb-6 float">
             The Commoners Kitchen
           </h1>
-          <p className="text-xl md:text-2xl text-[#FEFEFE] mb-8">
+          <div className="decorative-line mx-auto mb-8" />
+          <p className="artistic-subtitle text-[#FEFEFE] mb-8">
             A European Café Experience in Surat
           </p>
-          <div className="w-24 h-1 bg-[#D4AF37] mx-auto mb-8" />
-          <p className="text-lg text-[#FEFEFE]">
+          <p className="artistic-text text-[#FEFEFE]/90">
             Established 2019
           </p>
         </div>
@@ -44,7 +68,7 @@ const Hero = () => {
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="animate-bounce">
           <svg
-            className="w-6 h-6 text-[#FEFEFE]"
+            className="w-6 h-6 text-[#FEFEFE] hover-glow"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
