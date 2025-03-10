@@ -6,8 +6,17 @@ const Hero = () => {
   const textRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if device is mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Run on mount
+    checkMobile();
+    
     // Simulate loading completion
     const timer = setTimeout(() => {
       setIsLoaded(true);
@@ -16,7 +25,11 @@ const Hero = () => {
     const handleScroll = () => {
       if (videoRef.current) {
         const scrolled = window.scrollY;
-        videoRef.current.style.transform = `translateY(${scrolled * 0.4}px) scale(${1 + scrolled * 0.0005})`;
+        // Reduced parallax effect for mobile
+        const parallaxFactor = isMobile ? 0.2 : 0.4;
+        const scaleFactor = isMobile ? 0.0003 : 0.0005;
+        
+        videoRef.current.style.transform = `translateY(${scrolled * parallaxFactor}px) scale(${1 + scrolled * scaleFactor})`;
         
         if (overlayRef.current) {
           overlayRef.current.style.opacity = `${Math.min(0.7, 0.4 + scrolled * 0.0005)}`;
@@ -25,7 +38,8 @@ const Hero = () => {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (textRef.current) {
+      // Skip 3D effect on mobile for better performance
+      if (textRef.current && !isMobile) {
         const { clientX, clientY } = e;
         const { left, top, width, height } = textRef.current.getBoundingClientRect();
         const x = (clientX - left) / width - 0.5;
@@ -35,19 +49,30 @@ const Hero = () => {
         textRef.current.style.setProperty('--mouse-y', `${y}`);
       }
     };
+    
+    const handleResize = () => {
+      checkMobile();
+      // Reset transform styles on resize
+      if (textRef.current) {
+        textRef.current.style.setProperty('--mouse-x', '0');
+        textRef.current.style.setProperty('--mouse-y', '0');
+      }
+    };
 
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
     
     return () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isMobile]);
 
   return (
-    <div className="relative h-screen overflow-hidden">
+    <div id="home" className="relative h-screen overflow-hidden">
       <div
         ref={videoRef}
         className="absolute inset-0 bg-cover bg-center artistic-overlay transition-transform duration-700"
@@ -71,49 +96,51 @@ const Hero = () => {
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
           style={{
-            transform: `perspective(1000px) 
-                       rotateX(calc(var(--mouse-y, 0) * 10deg)) 
-                       rotateY(calc(var(--mouse-x, 0) * 10deg))`,
+            transform: isMobile 
+              ? 'none' 
+              : `perspective(1000px) 
+                 rotateX(calc(var(--mouse-y, 0) * 10deg)) 
+                 rotateY(calc(var(--mouse-x, 0) * 10deg))`,
             transformStyle: 'preserve-3d',
           }}
         >
-          <div className="relative inline-block mb-6">
+          <div className="relative inline-block mb-4 sm:mb-6">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#D4AF37]/20 to-[#D4AF37]/10 rounded-full blur-md"></div>
-            <h1 className="artistic-title text-[#FEFEFE] relative">
+            <h1 className="artistic-title text-[#FEFEFE] relative text-4xl sm:text-5xl md:text-6xl">
               The Commoners Kitchen
             </h1>
           </div>
           
-          <div className="decorative-line mx-auto mb-8" />
+          <div className="decorative-line mx-auto mb-6 sm:mb-8" />
           
-          <p className={`artistic-subtitle text-[#FEFEFE] mb-8 transition-all duration-1000 delay-300 ${
+          <p className={`artistic-subtitle text-[#FEFEFE] mb-6 sm:mb-8 text-lg sm:text-xl md:text-2xl transition-all duration-1000 delay-300 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             A European Café Experience in Surat
           </p>
           
-          <p className={`artistic-text text-[#FEFEFE]/90 transition-all duration-1000 delay-500 ${
+          <p className={`artistic-text text-[#FEFEFE]/90 text-sm sm:text-base transition-all duration-1000 delay-500 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             Established 2019
           </p>
           
-          <div className={`mt-12 transition-all duration-1000 delay-700 ${
+          <div className={`mt-8 sm:mt-12 transition-all duration-1000 delay-700 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <button className="border border-[#D4AF37] text-[#D4AF37] py-3 px-8 rounded-lg hover:bg-[#D4AF37]/10 transition-colors duration-300">
-              <span className="font-serif">Discover Our Story</span>
-            </button>
+            <a href="#story" className="inline-block text-[#D4AF37] py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg hover:bg-[#D4AF37]/10 transition-colors duration-300">
+              <span className="font-serif tracking-wide">Discover Our Story</span>
+            </a>
           </div>
         </div>
       </div>
       
-      <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-1000 delay-1000 ${
+      <div className={`absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-1000 delay-1000 ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
       }`}>
-        <div className="animate-bounce">
+        <a href="#story" className="block animate-bounce">
           <svg
-            className="w-6 h-6 text-[#FEFEFE] hover-glow"
+            className="w-5 h-5 sm:w-6 sm:h-6 text-[#FEFEFE] hover-glow"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -123,16 +150,18 @@ const Hero = () => {
           >
             <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
           </svg>
-        </div>
+        </a>
       </div>
       
-      {/* Floating particles */}
+      {/* Floating particles - reduced for mobile */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(isMobile ? 10 : 20)].map((_, i) => (
           <div 
             key={i}
-            className="absolute w-1 h-1 rounded-full bg-[#D4AF37]/30 animate-float"
+            className="absolute rounded-full bg-[#D4AF37]/30 animate-float"
             style={{
+              width: `${Math.random() * (isMobile ? 2 : 3) + 1}px`,
+              height: `${Math.random() * (isMobile ? 2 : 3) + 1}px`,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 5}s`,

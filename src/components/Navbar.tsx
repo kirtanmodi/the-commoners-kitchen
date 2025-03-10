@@ -8,6 +8,18 @@ const Navbar = () => {
   const navRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const navLinks = [
     { name: 'Home', href: '#', section: 'home' },
     { name: 'Story', href: '#story', section: 'story' },
@@ -44,12 +56,21 @@ const Navbar = () => {
       }
     };
 
+    const handleResize = () => {
+      // Close mobile menu when window is resized to desktop size
+      if (window.innerWidth >= 768 && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
     document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('resize', handleResize);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', handleResize);
     };
   }, [isOpen, navLinks]);
 
@@ -63,7 +84,7 @@ const Navbar = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled 
           ? 'bg-black/90 backdrop-blur-md py-3 shadow-lg' 
-          : 'bg-transparent py-6'
+          : 'bg-transparent py-4 sm:py-6'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,7 +94,7 @@ const Navbar = () => {
             className="flex items-center space-x-2 group"
             onClick={() => setActiveSection('home')}
           >
-            <div className="relative w-10 h-10 overflow-hidden">
+            <div className="relative w-8 h-8 sm:w-10 sm:h-10 overflow-hidden">
               <img 
                 src={logo} 
                 alt="The Commoners Kitchen" 
@@ -81,9 +102,9 @@ const Navbar = () => {
               />
             </div>
             <div className="text-[#FEFEFE] font-serif">
-              <span className="block text-sm tracking-widest">THE</span>
-              <span className="block text-lg tracking-wider -mt-1">COMMONERS</span>
-              <span className="block text-xs tracking-widest -mt-1">KITCHEN</span>
+              <span className="block text-xs sm:text-sm tracking-widest">THE</span>
+              <span className="block text-base sm:text-lg tracking-wider -mt-1">COMMONERS</span>
+              <span className="block text-[10px] sm:text-xs tracking-widest -mt-1">KITCHEN</span>
             </div>
           </a>
 
@@ -110,9 +131,10 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-[#FEFEFE] focus:outline-none"
+            className={`md:hidden text-[#FEFEFE] focus:outline-none z-50 relative transition-transform duration-300 ${isOpen ? 'scale-110' : ''}`}
             onClick={toggleMenu}
             aria-label="Toggle menu"
+            aria-expanded={isOpen}
           >
             <div className="relative w-6 h-5">
               <span 
@@ -138,25 +160,45 @@ const Navbar = () => {
       {/* Mobile Navigation */}
       <div 
         ref={menuRef}
-        className={`md:hidden fixed inset-0 bg-black/95 backdrop-blur-md z-40 transition-all duration-500 ${
+        className={`md:hidden fixed inset-0 bg-black/95 backdrop-blur-lg z-40 transition-all duration-500 ${
           isOpen 
             ? 'opacity-100 pointer-events-auto' 
             : 'opacity-0 pointer-events-none'
         }`}
       >
+        {/* Artistic elements for mobile menu */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-gradient-radial from-[#D4AF37]/10 to-transparent opacity-60"></div>
+          <div className="absolute bottom-0 right-0 w-full h-3/4 bg-gradient-to-t from-black to-transparent"></div>
+          {[...Array(8)].map((_, i) => (
+            <div 
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-[#D4AF37]/20 animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 3 + 1}px`,
+                height: `${Math.random() * 3 + 1}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${5 + Math.random() * 10}s`,
+              }}
+            />
+          ))}
+        </div>
+
         <div className="flex flex-col items-center justify-center h-full">
           <div className="space-y-8">
             {navLinks.map((link, index) => (
               <a
                 key={link.name}
                 href={link.href}
-                className={`block text-center text-xl font-serif tracking-wider transition-all duration-300 ${
+                className={`block text-center text-xl font-serif tracking-wider transition-all duration-500 relative overflow-hidden group ${
                   activeSection === link.section
                     ? 'text-[#D4AF37]'
                     : 'text-[#FEFEFE]/80'
                 }`}
                 style={{
-                  transitionDelay: `${index * 50}ms`,
+                  transitionDelay: `${100 + index * 50}ms`,
                   opacity: isOpen ? 1 : 0,
                   transform: isOpen ? 'translateY(0)' : 'translateY(20px)'
                 }}
@@ -165,7 +207,8 @@ const Navbar = () => {
                   setIsOpen(false);
                 }}
               >
-                {link.name}
+                <span className="relative z-10">{link.name}</span>
+                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#D4AF37]/50 transition-all duration-300 group-hover:w-full"></span>
               </a>
             ))}
           </div>

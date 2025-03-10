@@ -4,12 +4,14 @@ import useMotionPreference from '../hooks/useMotionPreference';
 import ambience1 from '../assets/ambience-1.jpg';
 import ambience2 from '../assets/ambience-2.jpg';
 import ambience3 from '../assets/ambience-3.jpg';
+import ambience4 from '../assets/ambience4.jpg';
 import ambience6 from '../assets/ambience6.jpg';
 import ambience7 from '../assets/ambience7.jpg';
 
 const Ambience = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [imageErrors, setImageErrors] = useState<boolean[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,6 +56,7 @@ const Ambience = () => {
     { src: ambience1, alt: 'Cafe interior with warm lighting' },
     { src: ambience2, alt: 'Cozy seating area' },
     { src: ambience3, alt: 'Elegant table setting' },
+    { src: ambience4, alt: 'Atmospheric cafe setting' },
     { src: ambience6, alt: 'Artistic cafe corner' },
     { src: ambience7, alt: 'Inviting atmosphere' }
   ];
@@ -63,8 +66,33 @@ const Ambience = () => {
     "Every corner tells a story",
     "Where memories are made",
     "A sanctuary for the senses",
-    "Where art meets hospitality"
+    "Where art meets hospitality",
+    "An escape from the ordinary"
   ];
+
+  // Initialize image loading state array
+  useEffect(() => {
+    setImageErrors(new Array(images.length).fill(false));
+  }, [images.length]);
+
+  // Preload images
+  useEffect(() => {
+    images.forEach((image, index) => {
+      const img = new Image();
+      img.src = image.src;
+      img.onload = () => {
+        console.log(`Image ${index + 1} loaded successfully`);
+      };
+      img.onerror = () => {
+        setImageErrors(prev => {
+          const newState = [...prev];
+          newState[index] = true;
+          return newState;
+        });
+        console.error(`Failed to load image: ${image.src}`);
+      };
+    });
+  }, [images]);
 
   useEffect(() => {
     // Only auto-rotate when not hovering
@@ -117,6 +145,31 @@ const Ambience = () => {
         animate: { y: 0, opacity: 1 },
         transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
       };
+
+  // Handle image loading error
+  const handleImageError = (index: number) => {
+    console.error(`Error loading image at index ${index}`);
+    setImageErrors(prev => {
+      const newState = [...prev];
+      newState[index] = true;
+      return newState;
+    });
+  };
+
+  // Get the next valid image index
+  const getValidImageIndex = (currentIndex: number): number => {
+    if (!imageErrors[currentIndex]) return currentIndex;
+    
+    // Loop through all images to find the next non-error one
+    for (let i = 0; i < images.length; i++) {
+      const idx = (currentIndex + i) % images.length;
+      if (!imageErrors[idx]) return idx;
+    }
+    
+    return currentIndex; // Fallback to current even if it has error
+  };
+
+  const validIndex = getValidImageIndex(activeIndex);
 
   return (
     <motion.section 
@@ -176,7 +229,7 @@ const Ambience = () => {
           >
             <motion.div 
               ref={imagesRef}
-              className={`aspect-w-4 aspect-h-5 rounded-lg overflow-hidden artistic-border transition-all duration-500 ${shouldUseReducedMotion ? '' : 'transform-3d'}`}
+              className={`aspect-w-4 aspect-h-5 sm:aspect-w-16 sm:aspect-h-12 md:aspect-w-4 md:aspect-h-5 rounded-lg overflow-hidden artistic-border transition-all duration-500 ${shouldUseReducedMotion ? '' : 'transform-3d'}`}
               style={{
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
                 borderRadius: "0.5rem",
@@ -185,7 +238,7 @@ const Ambience = () => {
             >
               <AnimatePresence mode="wait">
                 {images.map((image, index) => (
-                  index === activeIndex && (
+                  index === validIndex && (
                     <motion.div 
                       key={index}
                       className="absolute inset-0"
@@ -197,12 +250,24 @@ const Ambience = () => {
                         ease: shouldUseReducedMotion ? "easeOut" : [0.16, 1, 0.3, 1]
                       }}
                     >
-                      <img 
-                        src={image.src} 
-                        alt={image.alt} 
-                        className={`object-cover w-full h-full ${shouldUseReducedMotion ? '' : 'transform transition-transform duration-5000 ease-in-out hover:scale-105'}`}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent mix-blend-multiply"></div>
+                      {imageErrors[index] ? (
+                        <div className="flex items-center justify-center w-full h-full bg-black/80">
+                          <p className="text-[#FEFEFE]/70 text-center p-4">
+                            <span className="block text-[#D4AF37] text-xl mb-2">Image unavailable</span>
+                            Immerse yourself in our beautiful ambience in person
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <img 
+                            src={image.src} 
+                            alt={image.alt} 
+                            className={`object-cover w-full h-full ${shouldUseReducedMotion ? '' : 'transform transition-transform duration-5000 ease-in-out hover:scale-105'}`}
+                            onError={() => handleImageError(index)}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent mix-blend-multiply"></div>
+                        </>
+                      )}
                     </motion.div>
                   )
                 ))}
@@ -215,7 +280,7 @@ const Ambience = () => {
               >
                 <div className="backdrop-blur-sm bg-black/30 p-4 rounded-sm inline-block">
                   <span className="block text-[#FEFEFE] italic text-xl font-serif">
-                    {quotes[activeIndex]}
+                    {quotes[validIndex]}
                   </span>
                   <div className="mt-2 mx-auto w-16 h-[1px] bg-[#D4AF37]"></div>
                 </div>
@@ -265,21 +330,24 @@ const Ambience = () => {
               transition={{ duration: 1, delay: 0.8 }}
             >
               {images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveIndex(index)}
-                  className={`group relative transition-all duration-300 ease-out`}
-                  aria-label={`View image ${index + 1}`}
-                >
-                  <span className={`block w-3 h-3 md:w-4 md:h-4 rounded-full transition-all duration-500 ${
-                    index === activeIndex 
-                      ? 'bg-[#D4AF37] scale-125' 
-                      : 'bg-[#FEFEFE]/30 hover:bg-[#FEFEFE]/50'
-                  }`} />
-                  <span className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-[#FEFEFE]/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`}>
-                    {index + 1}
-                  </span>
-                </button>
+                !imageErrors[index] && (
+                  <button
+                    key={index}
+                    onClick={() => setActiveIndex(index)}
+                    className={`group relative transition-all duration-300 ease-out ${imageErrors[index] ? 'opacity-30 cursor-not-allowed' : ''}`}
+                    aria-label={`View image ${index + 1}`}
+                    disabled={imageErrors[index]}
+                  >
+                    <span className={`block w-3 h-3 md:w-4 md:h-4 rounded-full transition-all duration-500 ${
+                      index === validIndex 
+                        ? 'bg-[#D4AF37] scale-125' 
+                        : 'bg-[#FEFEFE]/30 hover:bg-[#FEFEFE]/50'
+                    }`} />
+                    <span className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-[#FEFEFE]/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`}>
+                      {index + 1}
+                    </span>
+                  </button>
+                )
               ))}
             </motion.div>
           </div>
