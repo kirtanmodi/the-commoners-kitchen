@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import ambience1 from '../assets/ambience7.jpg';
+// Import the image as URL instead of direct import
+import ambience7Url from '../assets/ambience7.jpg?url';
 
 const Hero = () => {
   const videoRef = useRef<HTMLDivElement>(null);
@@ -7,8 +8,25 @@ const Hero = () => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState<string>('');
 
   useEffect(() => {
+    // Preload the image
+    const img = new Image();
+    img.src = ambience7Url;
+    img.onload = () => {
+      console.log('Hero image loaded successfully');
+      setBackgroundImage(`url(${ambience7Url})`);
+      setImageError(false);
+    };
+    img.onerror = () => {
+      console.error('Failed to load hero image:', ambience7Url);
+      setImageError(true);
+      // Try to set a fallback solid color
+      setBackgroundImage('none');
+    };
+    
     // Check if device is mobile
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -77,16 +95,31 @@ const Hero = () => {
         ref={videoRef}
         className="absolute inset-0 bg-cover bg-center artistic-overlay transition-transform duration-700"
         style={{
-          backgroundImage: `url(${ambience1})`,
+          backgroundImage: backgroundImage || 'none',
           transform: 'scale(1.05)',
+          backgroundColor: imageError ? '#222' : undefined,
         }}
       >
+        {imageError && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-gray-300 text-lg">Image loading failed</p>
+          </div>
+        )}
         <div 
           ref={overlayRef}
           className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70 transition-opacity duration-700" 
         />
       </div>
       
+      {/* Debug UI - only visible during development */}
+      {/* {import.meta.env.DEV && (
+        <div className="fixed top-20 right-4 z-50 bg-black/80 text-white p-4 rounded-lg text-xs max-w-xs overflow-auto">
+          <h3 className="font-bold mb-2">Hero Image Debug:</h3>
+          <p>Status: {imageError ? 'Error' : backgroundImage ? 'Loaded' : 'Loading'}</p>
+          <p className="text-gray-400 text-xs mt-1 break-all">{ambience7Url?.toString().substring(0, 50)}</p>
+        </div>
+      )}
+       */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.1)_0%,transparent_70%)] pointer-events-none z-10" />
       
       <div className="relative h-full flex items-center justify-center text-center px-4 z-10">

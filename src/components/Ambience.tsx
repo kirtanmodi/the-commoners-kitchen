@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import useMotionPreference from '../hooks/useMotionPreference';
-import ambience1 from '../assets/ambience-1.jpg';
-import ambience2 from '../assets/ambience-2.jpg';
-import ambience3 from '../assets/ambience-3.jpg';
-import ambience4 from '../assets/ambience4.jpg';
-import ambience6 from '../assets/ambience6.jpg';
-import ambience7 from '../assets/ambience7.jpg';
+// Import images with URL query parameter for Vite
+import ambience1Url from '../assets/ambience-1.jpg?url';
+import ambience2Url from '../assets/ambience-2.jpg?url';
+import ambience3Url from '../assets/ambience-3.jpg?url';
+import ambience4Url from '../assets/ambience4.jpg?url';
+import ambience6Url from '../assets/ambience6.jpg?url';
+import ambience7Url from '../assets/ambience7.jpg?url';
 
 const Ambience = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [imageErrors, setImageErrors] = useState<boolean[]>([]);
+  const [loadingStatus, setLoadingStatus] = useState<string[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,12 +55,12 @@ const Ambience = () => {
   );
   
   const images = [
-    { src: ambience1, alt: 'Cafe interior with warm lighting' },
-    { src: ambience2, alt: 'Cozy seating area' },
-    { src: ambience3, alt: 'Elegant table setting' },
-    { src: ambience4, alt: 'Atmospheric cafe setting' },
-    { src: ambience6, alt: 'Artistic cafe corner' },
-    { src: ambience7, alt: 'Inviting atmosphere' }
+    { src: ambience1Url, alt: 'Cafe interior with warm lighting' },
+    { src: ambience2Url, alt: 'Cozy seating area' },
+    { src: ambience3Url, alt: 'Elegant table setting' },
+    { src: ambience4Url, alt: 'Atmospheric cafe setting' },
+    { src: ambience6Url, alt: 'Artistic cafe corner' },
+    { src: ambience7Url, alt: 'Inviting atmosphere' }
   ];
   
   const quotes = [
@@ -73,23 +75,36 @@ const Ambience = () => {
   // Initialize image loading state array
   useEffect(() => {
     setImageErrors(new Array(images.length).fill(false));
+    setLoadingStatus(new Array(images.length).fill('pending'));
   }, [images.length]);
 
-  // Preload images
+  // Preload images with enhanced debugging
   useEffect(() => {
     images.forEach((image, index) => {
       const img = new Image();
       img.src = image.src;
+      
       img.onload = () => {
-        console.log(`Image ${index + 1} loaded successfully`);
+        setLoadingStatus(prev => {
+          const newStatus = [...prev];
+          newStatus[index] = 'loaded';
+          return newStatus;
+        });
+        console.log(`Image ${index + 1} loaded successfully:`, image.src);
       };
-      img.onerror = () => {
+      
+      img.onerror = (error) => {
         setImageErrors(prev => {
           const newState = [...prev];
           newState[index] = true;
           return newState;
         });
-        console.error(`Failed to load image: ${image.src}`);
+        setLoadingStatus(prev => {
+          const newStatus = [...prev];
+          newStatus[index] = `error: ${error}`;
+          return newStatus;
+        });
+        console.error(`Failed to load image ${index}:`, image.src, error);
       };
     });
   }, [images]);
@@ -180,6 +195,28 @@ const Ambience = () => {
         backgroundColor: "#080808",
       }}
     >
+      {/* Debug UI - only visible during development */}
+      {/* {import.meta.env.DEV && (
+        <div className="fixed top-4 right-4 z-50 bg-black/80 text-white p-4 rounded-lg text-xs max-w-xs overflow-auto max-h-80">
+          <h3 className="font-bold mb-2">Image Debug Info:</h3>
+          <ul>
+            {images.map((img, idx) => (
+              <li key={idx} className="mb-1">
+                <span className={`
+                  ${loadingStatus[idx] === 'loaded' ? 'text-green-400' : ''}
+                  ${loadingStatus[idx]?.startsWith('error') ? 'text-red-400' : ''}
+                  ${loadingStatus[idx] === 'pending' ? 'text-yellow-400' : ''}
+                `}>
+                  Image {idx+1}: {loadingStatus[idx]}
+                </span>
+                <br />
+                <span className="text-gray-400">{String(img.src).substring(0, 30)}...</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )} */}
+
       <div className="absolute inset-0 bg-gradient-radial from-black/70 via-black/90 to-black z-0" />
       <div className="absolute inset-0 bg-noise opacity-5 mix-blend-soft-light z-1" />
       
@@ -251,22 +288,20 @@ const Ambience = () => {
                       }}
                     >
                       {imageErrors[index] ? (
-                        <div className="flex items-center justify-center w-full h-full bg-black/80">
-                          <p className="text-[#FEFEFE]/70 text-center p-4">
-                            <span className="block text-[#D4AF37] text-xl mb-2">Image unavailable</span>
-                            Immerse yourself in our beautiful ambience in person
-                          </p>
+                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                          <p className="text-gray-300">Image failed to load</p>
                         </div>
                       ) : (
-                        <>
-                          <img 
-                            src={image.src} 
-                            alt={image.alt} 
-                            className={`object-cover w-full h-full ${shouldUseReducedMotion ? '' : 'transform transition-transform duration-5000 ease-in-out hover:scale-105'}`}
-                            onError={() => handleImageError(index)}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent mix-blend-multiply"></div>
-                        </>
+                        <img 
+                          src={image.src} 
+                          alt={image.alt}
+                          className="w-full h-full object-cover" 
+                          onError={() => handleImageError(index)}
+                          style={{
+                            opacity: loadingStatus[index] === 'loaded' ? 1 : 0.5,
+                            transition: 'opacity 0.5s ease'
+                          }}
+                        />
                       )}
                     </motion.div>
                   )
