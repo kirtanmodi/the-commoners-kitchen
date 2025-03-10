@@ -75,7 +75,7 @@ function App() {
         <Story />
         <About />
         <MenuExperience />
-        <Ambience />
+        {/* <Ambience /> */}
         <Founders />
         <Gallery />
       </main>

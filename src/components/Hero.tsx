@@ -161,9 +161,9 @@ const Hero = () => {
           <div className={`mt-8 sm:mt-12 transition-all duration-1000 delay-700 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <a href="#story" className="inline-block text-[#D4AF37] py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg hover:bg-[#D4AF37]/10 transition-colors duration-300">
+            {/* <a href="#story" className="inline-block text-[#D4AF37] py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg hover:bg-[#D4AF37]/10 transition-colors duration-300">
               <span className="font-serif tracking-wide">Discover Our Story</span>
-            </a>
+            </a> */}
           </div>
         </div>
       </div>
