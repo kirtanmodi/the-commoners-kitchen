@@ -5,7 +5,7 @@ import About from './components/About'
 import Founders from './components/Founders'
 import Gallery from './components/Gallery'
 
-import Ambience from './components/Ambience'
+// import Ambience from './components/Ambience'
 import './App.css'
 import Story from './components/Story'
 import MenuExperience from './components/MenuExperience'
@@ -67,10 +67,9 @@ function App() {
   }
 
   return (
-    <div className="bg-black text-[#FEFEFE] overflow-hidden">
+    <div className="bg-black text-[#FEFEFE] w-full overflow-hidden">
       <Navbar />
       <main className="relative">
-        <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 bg-noise-pattern opacity-5"></div>
         <Hero />
         <Story />
         <About />
