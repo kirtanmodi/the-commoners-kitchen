@@ -14,7 +14,7 @@ const Hero = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState<string>('');
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [, setScrollProgress] = useState(0);
 
   useEffect(() => {
     // Preload the image with appropriate sizing for mobile
